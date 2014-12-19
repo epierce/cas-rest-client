@@ -3,64 +3,124 @@ namespace epierce;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use SebastianBergmann\Exporter\Exception;
 
+/**
+ * Class CasRestClient
+ * @package epierce
+ */
 class CasRestClient
 {
 
+    /**
+     * @var Client
+     */
     private $guzzle_client;
+    /**
+     * @var bool
+     */
     private $verify_ssl = TRUE;
+    /**
+     * @var
+     */
     private $cas_server;
+    /**
+     * @var string
+     */
     private $cas_ticket_url = '/cas/v1/tickets';
+    /**
+     * @var
+     */
     private $cas_username;
+    /**
+     * @var
+     */
     private $cas_password;
-
+    /**
+     * @var
+     */
     private $tgt_storage_location;
+    /**
+     * @var
+     */
     private $tgt_location;
+    /**
+     * @var
+     */
     private $tgt;
 
+    /**
+     *
+     */
     public function __construct()
     {
         $this->guzzle_client = new Client();
     }
 
+    /**
+     * @param $server
+     */
     public function setCasServer($server)
     {
         $this->cas_server = $server;
     }
 
+    /**
+     * @param $username
+     * @param $password
+     */
     public function setCredentials($username, $password)
     {
         $this->cas_username = $username;
         $this->cas_password = $password;
     }
 
+    /**
+     * @param $ticket_url
+     */
     public function setTicketUrl($ticket_url)
     {
         $this->cas_ticket_url = $ticket_url;
     }
 
+    /**
+     * @param bool $value
+     */
     public function verifySSL($value = TRUE)
     {
         $this->verify_ssl = $value;
     }
 
+    /**
+     * @return Client
+     */
     public function getGuzzleClient()
     {
         return $this->guzzle_client;
     }
 
+    /**
+     * @return mixed
+     */
     public function getTGT()
     {
         return $this->tgt;
     }
 
+    /**
+     * @param $tgt
+     */
     public function setTGT($tgt)
     {
         $this->tgt = $tgt;
         $this->tgt_location = $this->cas_server . $this->cas_ticket_url . '/' . $tgt;
     }
 
+    /**
+     * @param string $tgt_storage_location
+     * @param bool $force_auth
+     * @return bool
+     * @throws \Exception
+     */
     public function login($tgt_storage_location = '', $force_auth = FALSE)
     {
 
@@ -122,6 +182,10 @@ class CasRestClient
         return TRUE;
     }
 
+    /**
+     * @return bool
+     * @throws \Exception
+     */
     public function logout()
     {
         // Make sure a TGT exists
@@ -137,7 +201,13 @@ class CasRestClient
         return TRUE;
     }
 
-    public function get($service)
+    /**
+     * @param $service
+     * @param array $headers
+     * @return \GuzzleHttp\Message\FutureResponse|\GuzzleHttp\Message\ResponseInterface|\GuzzleHttp\Ring\Future\FutureInterface|mixed|null
+     * @throws \Exception
+     */
+    public function get($service, $headers = [])
     {
         // Make sure a TGT exists
         $this->checkTgtExists();
@@ -150,12 +220,24 @@ class CasRestClient
         } else {
             $final_service = $service . '&ticket=' . $service_ticket;
         }
+
+        $options = [
+            'cookies' => TRUE,
+            'headers' => $headers
+        ];
         // Now call the service
-        return $this->guzzle_client->get($final_service, ['cookies' => TRUE]);
+        return $this->guzzle_client->get($final_service, $options);
 
     }
 
-    public function post($service, $fields = [])
+    /**
+     * @param $service
+     * @param array $body
+     * @param array $headers
+     * @return \GuzzleHttp\Message\FutureResponse|\GuzzleHttp\Message\ResponseInterface|\GuzzleHttp\Ring\Future\FutureInterface|mixed|null
+     * @throws \Exception
+     */
+    public function post($service, $body = [], $headers = [])
     {
         // Make sure a TGT exists
         $this->checkTgtExists();
@@ -169,11 +251,176 @@ class CasRestClient
             $final_service = $service . '&ticket=' . $service_ticket;
         }
 
+        $options = [
+            'cookies' => TRUE,
+            'body' => $body,
+            'headers' => $headers
+        ];
+
         // Now call the service
-        return $this->guzzle_client->post($final_service, [body => $fields]);
+        return $this->guzzle_client->post($final_service, $options);
 
     }
 
+    /**
+     * @param $service
+     * @param array $body
+     * @param array $headers
+     * @return \GuzzleHttp\Message\FutureResponse|\GuzzleHttp\Message\ResponseInterface|\GuzzleHttp\Ring\Future\FutureInterface|mixed|null
+     * @throws \Exception
+     */
+    public function put($service, $body = [], $headers = [])
+    {
+        // Make sure a TGT exists
+        $this->checkTgtExists();
+
+        $service_ticket = $this->getServiceTicket($service);
+
+        // Append the ticket to the end of the service's parameters
+        if (strpos($service, '?') === false) {
+            $final_service = $service . '?ticket=' . $service_ticket;
+        } else {
+            $final_service = $service . '&ticket=' . $service_ticket;
+        }
+
+        $options = [
+            'cookies' => TRUE,
+            'body' => $body,
+            'headers' => $headers
+        ];
+
+        // Now call the service
+        return $this->guzzle_client->put($final_service, $options);
+
+    }
+
+    /**
+     * @param $service
+     * @param array $body
+     * @param array $headers
+     * @return \GuzzleHttp\Message\FutureResponse|\GuzzleHttp\Message\ResponseInterface|\GuzzleHttp\Ring\Future\FutureInterface|mixed|null
+     * @throws \Exception
+     */
+    public function patch($service, $body = [], $headers = [])
+    {
+        // Make sure a TGT exists
+        $this->checkTgtExists();
+
+        $service_ticket = $this->getServiceTicket($service);
+
+        // Append the ticket to the end of the service's parameters
+        if (strpos($service, '?') === false) {
+            $final_service = $service . '?ticket=' . $service_ticket;
+        } else {
+            $final_service = $service . '&ticket=' . $service_ticket;
+        }
+
+        $options = [
+            'cookies' => TRUE,
+            'body' => $body,
+            'headers' => $headers
+        ];
+
+        // Now call the service
+        return $this->guzzle_client->patch($final_service, $options);
+
+    }
+
+    /**
+     * @param $service
+     * @param array $body
+     * @param array $headers
+     * @return \GuzzleHttp\Message\FutureResponse|\GuzzleHttp\Message\ResponseInterface|\GuzzleHttp\Ring\Future\FutureInterface|mixed|null
+     * @throws \Exception
+     */
+    public function options($service, $body = [], $headers = [])
+    {
+        // Make sure a TGT exists
+        $this->checkTgtExists();
+
+        $service_ticket = $this->getServiceTicket($service);
+
+        // Append the ticket to the end of the service's parameters
+        if (strpos($service, '?') === false) {
+            $final_service = $service . '?ticket=' . $service_ticket;
+        } else {
+            $final_service = $service . '&ticket=' . $service_ticket;
+        }
+
+        $options = [
+            'cookies' => TRUE,
+            'body' => $body,
+            'headers' => $headers
+        ];
+
+        // Now call the service
+        return $this->guzzle_client->options($final_service, $options);
+
+    }
+
+    /**
+     * @param $service
+     * @param array $headers
+     * @return \GuzzleHttp\Message\FutureResponse|\GuzzleHttp\Message\ResponseInterface|\GuzzleHttp\Ring\Future\FutureInterface|mixed|null
+     * @throws \Exception
+     */
+    public function delete($service, $headers = [])
+    {
+        // Make sure a TGT exists
+        $this->checkTgtExists();
+
+        $service_ticket = $this->getServiceTicket($service);
+
+        // Append the ticket to the end of the service's parameters
+        if (strpos($service, '?') === false) {
+            $final_service = $service . '?ticket=' . $service_ticket;
+        } else {
+            $final_service = $service . '&ticket=' . $service_ticket;
+        }
+
+        $options = [
+            'cookies' => TRUE,
+            'headers' => $headers
+        ];
+
+        // Now call the service
+        return $this->guzzle_client->delete($final_service, $options);
+
+    }
+
+    /**
+     * @param $service
+     * @param array $headers
+     * @return \GuzzleHttp\Message\FutureResponse|\GuzzleHttp\Message\ResponseInterface|\GuzzleHttp\Ring\Future\FutureInterface|mixed|null
+     * @throws \Exception
+     */
+    public function head($service, $headers = [])
+    {
+        // Make sure a TGT exists
+        $this->checkTgtExists();
+
+        $service_ticket = $this->getServiceTicket($service);
+
+        // Append the ticket to the end of the service's parameters
+        if (strpos($service, '?') === false) {
+            $final_service = $service . '?ticket=' . $service_ticket;
+        } else {
+            $final_service = $service . '&ticket=' . $service_ticket;
+        }
+
+        $options = [
+            'cookies' => TRUE,
+            'headers' => $headers
+        ];
+
+        // Now call the service
+        return $this->guzzle_client->head($final_service, $options);
+
+    }
+
+    /**
+     * @throws \Exception
+     */
     private function checkTgtExists()
     {
         if (empty($this->tgt_location)) {
@@ -181,6 +428,11 @@ class CasRestClient
         }
     }
 
+    /**
+     * @param $service
+     * @return bool|\GuzzleHttp\Stream\StreamInterface|null
+     * @throws \Exception
+     */
     private function getServiceTicket($service)
     {
         $request = $this->guzzle_client->createRequest('POST',
@@ -212,6 +464,10 @@ class CasRestClient
         }
     }
 
+    /**
+     * @param $tgt_storage_location
+     * @param $tgt
+     */
     private function writeTGTtoFile($tgt_storage_location, $tgt)
     {
         $tgt_storage_data = [
@@ -225,6 +481,10 @@ class CasRestClient
         file_put_contents($tgt_storage_location, json_encode($tgt_storage_data));
     }
 
+    /**
+     * @param $tgt_storage_location
+     * @throws \Exception
+     */
     private function loadTGTfromFile($tgt_storage_location)
     {
         $tgt_storage_data = json_decode(file_get_contents($tgt_storage_location), true);
