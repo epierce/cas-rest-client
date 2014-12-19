@@ -113,7 +113,7 @@ class CasRestClientTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @expectedException        Exception
-     * @expectedExceptionMessage You must use the login method before calling logout
+     * @expectedExceptionMessage You must login or provide a valid TGT
      */
     public function testFailedLogout() {
         $client = new CasRestClient();
@@ -129,26 +129,6 @@ class CasRestClientTest extends \PHPUnit_Framework_TestCase {
         $client->getGuzzleClient()->getEmitter()->attach($mock);
 
         $this->assertTrue($client->logout());
-    }
-
-    /**
-     * @expectedException        Exception
-     * @expectedExceptionMessage You must use the login method before calling logout
-     */
-    public function testFailedGetTGT() {
-        $client = new CasRestClient();
-        $client->setCasServer('https://example.org');
-        $client->setCredentials('user','secret');
-
-        // Create a mock subscriber and response.
-        $mock = new Mock([
-            new Response(200, [])
-        ]);
-
-        // Add the mock subscriber to the client.
-        $client->getGuzzleClient()->getEmitter()->attach($mock);
-
-        $this->assertTrue($client->getTGT());
     }
 
     /**
@@ -173,7 +153,7 @@ class CasRestClientTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @expectedException        Exception
-     * @expectedExceptionMessage You must use the login method before calling logout
+     * @expectedExceptionMessage You must login or provide a valid TGT
      */
     public function testFailedGetService() {
         $client = new CasRestClient();

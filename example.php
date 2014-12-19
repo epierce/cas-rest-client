@@ -15,8 +15,10 @@ $client->setCasServer('https://webauth.usf.edu');
 $client->setTicketUrl('/v1/tickets');
 $client->setCredentials();
 
-$client->login();
+$client->login('/tmp/cas_tgt.json');
 
 $response = $client->get("https://netid.usf.edu/vip/services/ws_convert.php?submit_type=netid&return_type=mail&return=json&value=epierce");
 
 print_r($response->json())."\n";
+
+$client->logout();
