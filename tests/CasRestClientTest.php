@@ -174,7 +174,7 @@ class CasRestClientTest extends \PHPUnit_Framework_TestCase {
     /**
      *
      */
-    public function testGetServiceNoParameters() {
+    public function testServiceNoParameters() {
         $client = new CasRestClient();
         $client->setCasServer('https://example.org');
         $client->setCredentials('user','secret');
@@ -196,7 +196,7 @@ class CasRestClientTest extends \PHPUnit_Framework_TestCase {
     /**
      *
      */
-    public function testGetServiceOneParameters()
+    public function testServiceOneParameter()
     {
         $client = new CasRestClient();
         $client->setCasServer('https://example.org');
@@ -219,22 +219,24 @@ class CasRestClientTest extends \PHPUnit_Framework_TestCase {
     /**
      *
      */
-    public function testGetServiceBody() {
+    public function testServiceGet()
+    {
         $client = new CasRestClient();
         $client->setCasServer('https://example.org');
-        $client->setCredentials('user','secret');
+        $client->setCredentials('user', 'secret');
 
         // Create a mock subscriber and response.
         $mock = new Mock([
             new Response(201, ['Location' => 'https://example.org/cas/v1/tickets/TGT-1-1qaz2wsx3edc']),
-            new Response(201, [],Stream::factory('ST-1-abc123')),
-            new Response(200, [],Stream::factory('test..1..2..3'))
+            new Response(201, [], Stream::factory('ST-1-abc123')),
+            new Response(200, [], Stream::factory('test..1..2..3'))
         ]);
 
         // Add the mock subscriber to the client.
         $client->getGuzzleClient()->getEmitter()->attach($mock);
         $client->login();
 
-        $this->assertEquals($client->get('https://www.example.com?param1=true')->getBody(),'test..1..2..3');
+        $this->assertEquals($client->get('https://www.example.com?param1=true')->getBody(), 'test..1..2..3');
     }
+
 }

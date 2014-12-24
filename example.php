@@ -12,7 +12,7 @@ require_once('vendor/autoload.php');
 $client = new CasRestClient();
 
 $client->setCasServer('https://webauth.usf.edu');
-$client->setTicketUrl('/v1/tickets');
+$client->setCasRestContext('/v1/tickets');
 $client->setCredentials();
 
 $client->login('/tmp/cas_tgt.json');
