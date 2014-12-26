@@ -13,11 +13,11 @@ $client = new CasRestClient();
 
 $client->setCasServer('https://webauth.usf.edu');
 $client->setCasRestContext('/v1/tickets');
-$client->setCredentials();
+$client->setCredentials("username","password");
 
 $client->login('/tmp/cas_tgt.json');
 
-$response = $client->get("https://netid.usf.edu/vip/services/ws_convert.php?submit_type=netid&return_type=mail&return=json&value=epierce");
+$response = $client->get("https://someservice");
 
 print_r($response->json())."\n";
 
