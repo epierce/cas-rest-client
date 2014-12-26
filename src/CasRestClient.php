@@ -14,7 +14,7 @@ class CasRestClient
     /**
      * @var string version
      */
-    private $version = '0.2.0';
+    private $version = '0.2.1';
     /**
      * @var Client Guzzle REST client
      */
