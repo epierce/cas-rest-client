@@ -1,5 +1,5 @@
 {
-    "name": "epierce/CasRestClient",
+    "name": "epierce/cas-rest-client",
     "description": "PHP client for the CAS REST protocol.",
     "type": "library",
     "license": "Apache-2.0",
