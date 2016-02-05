@@ -18,27 +18,27 @@ class CasRestClient
     /**
      * @var Client Guzzle REST client
      */
-    private $guzzle_client;
+    private $gozzleClient;
     /**
      * @var bool Verify SSL certificate or not
      */
-    private $verify_ssl = TRUE;
+    private $verifySSL = true;
     /**
      * @var string CAS server URL (https://host)
      */
-    private $cas_server;
+    private $casServer;
     /**
      * @var string CAS server path (default: /cas/v1/tickets)
      */
-    private $cas_rest_context = '/cas/v1/tickets';
+    private $casRESTcontext = '/cas/v1/tickets';
     /**
      * @var string Username for accessing CAS-protected resources
      */
-    private $cas_username;
+    private $casUsername;
     /**
      * @var string Password for accessing CAS-protected resources
      */
-    private $cas_password;
+    private $casPassword;
     /**
      * @var string Ticket-Granting Ticket
      */
@@ -46,11 +46,11 @@ class CasRestClient
     /**
      * @var string URL for the TGT on the CAS server
      */
-    private $tgt_location;
+    private $tgtLocation;
     /**
      * @var string File that TGT data will be stored in
      */
-    private $tgt_storage_location;
+    private $tgtStorageLocation;
 
 
     /**
@@ -58,7 +58,7 @@ class CasRestClient
      */
     public function __construct()
     {
-        $this->guzzle_client = new Client();
+        $this->gozzleClient = new Client();
     }
 
     /**
@@ -68,7 +68,7 @@ class CasRestClient
      */
     public function setCasServer($server)
     {
-        $this->cas_server = $server;
+        $this->casServer = $server;
     }
 
     /**
@@ -79,8 +79,8 @@ class CasRestClient
      */
     public function setCredentials($username, $password)
     {
-        $this->cas_username = $username;
-        $this->cas_password = $password;
+        $this->casUsername = $username;
+        $this->casPassword = $password;
     }
 
     /**
@@ -90,7 +90,7 @@ class CasRestClient
      */
     public function setCasRestContext($context)
     {
-        $this->cas_rest_context = $context;
+        $this->casRESTcontext = $context;
     }
 
     /**
@@ -98,9 +98,9 @@ class CasRestClient
      *
      * @param bool $value
      */
-    public function verifySSL($value = TRUE)
+    public function verifySSL($value = true)
     {
-        $this->verify_ssl = $value;
+        $this->verifySSL = $value;
     }
 
     /**
@@ -110,7 +110,17 @@ class CasRestClient
      */
     public function getGuzzleClient()
     {
-        return $this->guzzle_client;
+        return $this->gozzleClient;
+    }
+
+    /**
+     * Replace the Guzzle HTTP client
+     *
+     * @param Client $client
+     */
+    public function setGuzzleClient(Client $client)
+    {
+        $this->gozzleClient = $client;
     }
 
     /**
@@ -131,7 +141,7 @@ class CasRestClient
     public function setTGT($tgt)
     {
         $this->tgt = $tgt;
-        $this->tgt_location = $this->cas_server . $this->cas_rest_context . '/' . $tgt;
+        $this->tgtLocation = $this->casServer . $this->casRESTcontext . '/' . $tgt;
     }
 
     /**
@@ -145,14 +155,16 @@ class CasRestClient
         // Make sure a TGT exists
         $this->checkTgtExists();
 
-        $this->guzzle_client->delete($this->tgt_location);
-        $this->tgt_location = NULL;
-        $this->tgt = NULL;
+        $this->gozzleClient->delete($this->tgtLocation);
+        $this->tgtLocation = null;
+        $this->tgt = null;
 
         // Remove the TGT storage file
-        if ($this->tgt_storage_location) unlink($this->tgt_storage_location);
+        if ($this->tgtStorageLocation) {
+            unlink($this->tgtStorageLocation);
+        }
 
-        return TRUE;
+        return true;
     }
 
     /**
@@ -260,8 +272,8 @@ class CasRestClient
      */
     private function checkTgtExists()
     {
-        if (empty($this->tgt_location)) {
-            throw new \Exception ('You must login or provide a valid TGT', 400);
+        if (empty($this->tgtLocation)) {
+            throw new \Exception('You must login or provide a valid TGT', 400);
         }
     }
 
@@ -280,44 +292,44 @@ class CasRestClient
         // Make sure a TGT exists
         $this->checkTgtExists();
 
-        $service_ticket = $this->getServiceTicket($service);
+        $serviceTicket = $this->getServiceTicket($service);
 
         // Append the ticket to the end of the service's parameters
         if (strpos($service, '?') === false) {
-            $final_service = $service . '?ticket=' . $service_ticket;
+            $finalService = $service . '?ticket=' . $serviceTicket;
         } else {
-            $final_service = $service . '&ticket=' . $service_ticket;
+            $finalService = $service . '&ticket=' . $serviceTicket;
         }
 
         $options = [
-            'cookies' => TRUE,
+            'cookies' => true,
             'body' => $body,
             'headers' => $this->setGuzzleHeaders($headers)
         ];
 
         switch ($method) {
             case 'GET':
-                $result = $this->guzzle_client->get($final_service, $options);
+                $result = $this->gozzleClient->get($finalService, $options);
                 break;
 
             case 'HEAD':
-                $result = $this->guzzle_client->head($final_service, $options);
+                $result = $this->gozzleClient->head($finalService, $options);
                 break;
 
             case 'POST':
-                $result = $this->guzzle_client->post($final_service, $options);
+                $result = $this->gozzleClient->post($finalService, $options);
                 break;
 
             case 'PUT':
-                $result = $this->guzzle_client->put($final_service, $options);
+                $result = $this->gozzleClient->put($finalService, $options);
                 break;
 
             case 'PATCH':
-                $result = $this->guzzle_client->patch($final_service, $options);
+                $result = $this->gozzleClient->patch($finalService, $options);
                 break;
 
             case 'DELETE':
-                $result = $this->guzzle_client->delete($final_service, $options);
+                $result = $this->gozzleClient->delete($finalService, $options);
                 break;
 
             default:
@@ -336,175 +348,179 @@ class CasRestClient
      */
     private function getServiceTicket($service)
     {
-        $request = $this->guzzle_client->createRequest('POST',
-            $this->tgt_location,
+        $request = $this->gozzleClient->createRequest(
+            'POST',
+            $this->tgtLocation,
             [
-                'verify' => $this->verify_ssl,
+                'verify' => $this->verifySSL,
                 'body' => [
                     'service' => $service
                 ],
                 'headers' => $this->setGuzzleHeaders([])
-            ]);
+            ]
+        );
 
         try {
-            $response = $this->guzzle_client->send($request);
+            $response = $this->gozzleClient->send($request);
             return $response->getBody();
         } catch (ClientException $e) {
             // Bad TGT - login again
             if ($e->getCode() == 404) {
                 // Force authentication and save the TGT
-                $this->login($this->tgt_storage_location, TRUE);
+                $this->login($this->tgtStorageLocation, true);
                 return $this->getServiceTicket($service);
                 // Unsupported Media Type
             } elseif ($e->getCode() == 415) {
-                return FALSE;
+                return false;
             } else {
-                throw new \Exception ($e->getMessage(), $e->getCode());
+                throw new \Exception($e->getMessage(), $e->getCode());
             }
         } catch (\Exception $e) {
-            throw new \Exception ($e->getMessage(), $e->getCode());
+            throw new \Exception($e->getMessage(), $e->getCode());
         }
     }
 
     /**
-     * Validate credentials against the CAS server and retrieve a Ticket-Granting Ticket.  If a tgt_storage_location is
+     * Validate credentials against the CAS server and retrieve a Ticket-Granting Ticket.  If a tgtStorageLocation is
      * specified, the fle is read and the saved TGT is used instead of validating credentials.  If force_auth is TRUE,
      * always validate credentials.
      *
-     * @param string $tgt_storage_location
-     * @param bool $force_auth
+     * @param string $tgtStorageLocation
+     * @param bool $forceAuth
      * @return bool
      * @throws \Exception
      */
-    public function login($tgt_storage_location = '', $force_auth = FALSE)
+    public function login($tgtStorageLocation = '', $forceAuth = false)
     {
 
-        if ((!$this->cas_server) || (!$this->cas_password) || (!$this->cas_username)) {
-            throw new \Exception ('CAS server and credentials must be set before calling login()', 1);
+        if ((!$this->casServer) || (!$this->casPassword) || (!$this->casUsername)) {
+            throw new \Exception('CAS server and credentials must be set before calling login()', 1);
         }
 
-        $this->tgt_storage_location = $tgt_storage_location;
+        $this->tgtStorageLocation = $tgtStorageLocation;
 
         // Try to load the TGT from the storage file
-        if (!$force_auth && $tgt_storage_location) {
-            if (file_exists($tgt_storage_location)) {
-                if (is_readable($tgt_storage_location)) {
-                    $this->loadTGTfromFile($tgt_storage_location);
-                    return TRUE;
+        if (!$forceAuth && $tgtStorageLocation) {
+            if (file_exists($tgtStorageLocation)) {
+                if (is_readable($tgtStorageLocation)) {
+                    $this->loadTGTfromFile($tgtStorageLocation);
+                    return true;
                 } else {
-                    throw new \Exception('TGT storage file [' . $tgt_storage_location . '] is not readable!', 500);
+                    throw new \Exception('TGT storage file [' . $tgtStorageLocation . '] is not readable!', 500);
                 }
             }
         }
 
-        $request = $this->guzzle_client->createRequest('POST',
-            $this->cas_server . $this->cas_rest_context,
+        $request = $this->gozzleClient->createRequest(
+            'POST',
+            $this->casServer . $this->casRESTcontext,
             [
-                'verify' => $this->verify_ssl,
+                'verify' => $this->verifySSL,
                 'body' => [
-                    'username' => $this->cas_username,
-                    'password' => $this->cas_password
+                    'username' => $this->casUsername,
+                    'password' => $this->casPassword
                 ],
                 'headers' => $this->setGuzzleHeaders([])
-            ]);
+            ]
+        );
 
         try {
-            $response = $this->guzzle_client->send($request);
-            $response_headers = $response->getHeaders();
+            $response = $this->gozzleClient->send($request);
+            $responseHeaders = $response->getHeaders();
         } catch (ClientException $e) {
             // Bad username or password.
             if ($e->getCode() == 400) {
-                return FALSE;
+                return false;
                 // Unsupported Media Type
             } elseif ($e->getCode() == 415) {
-                return FALSE;
+                return false;
             } else {
-                throw new \Exception ($e->getMessage(), $e->getCode());
+                throw new \Exception($e->getMessage(), $e->getCode());
             }
         } catch (\Exception $e) {
-            throw new \Exception ($e->getMessage(), $e->getCode());
+            throw new \Exception($e->getMessage(), $e->getCode());
         }
 
-        if (isset($response_headers['Location'][0])) {
-            $this->tgt_location = $response_headers['Location'][0];
-            $this->tgt = substr(strrchr($this->tgt_location, '/'), 1);
+        if (isset($responseHeaders['Location'][0])) {
+            $this->tgtLocation = $responseHeaders['Location'][0];
+            $this->tgt = substr(strrchr($this->tgtLocation, '/'), 1);
         }
 
         // Save the TGT to a storage file.
-        if ($tgt_storage_location) {
-            $this->writeTGTtoFile($tgt_storage_location, $this->tgt);
+        if ($tgtStorageLocation) {
+            $this->writeTGTtoFile($tgtStorageLocation, $this->tgt);
         }
 
-        return TRUE;
+        return true;
     }
 
     /**
      * Read the TGT data from a file
      *
-     * @param string $tgt_storage_location
+     * @param string $tgtStorageLocation
      * @throws \Exception
      */
-    private function loadTGTfromFile($tgt_storage_location)
+    private function loadTGTfromFile($tgtStorageLocation)
     {
-        $tgt_storage_data = json_decode(file_get_contents($tgt_storage_location), true);
+        $tgtStorageData = json_decode(file_get_contents($tgtStorageLocation), true);
 
-        if ($tgt_storage_data['username']) {
-            $this->cas_username = $tgt_storage_data['username'];
+        if ($tgtStorageData['username']) {
+            $this->casUsername = $tgtStorageData['username'];
         } else {
-            throw new \Exception ('TGT storage missing "username" value!', 551);
+            throw new \Exception('TGT storage missing "username" value!', 551);
         }
-        if ($tgt_storage_data['server']) {
-            $this->cas_server = $tgt_storage_data['server'];
+        if ($tgtStorageData['server']) {
+            $this->casServer = $tgtStorageData['server'];
         } else {
-            throw new \Exception ('TGT storage missing "server" value!', 552);
+            throw new \Exception('TGT storage missing "server" value!', 552);
         }
-        if ($tgt_storage_data['context']) {
-            $this->cas_rest_context = $tgt_storage_data['context'];
+        if ($tgtStorageData['context']) {
+            $this->casRESTcontext = $tgtStorageData['context'];
         } else {
-            throw new \Exception ('TGT storage missing "context" value!', 552);
+            throw new \Exception('TGT storage missing "context" value!', 552);
         }
-        if ($tgt_storage_data['TGT']) {
-            $this->tgt = $tgt_storage_data['TGT'];
-            $this->tgt_location = $this->cas_server . $this->cas_rest_context . '/' . $this->tgt;
+        if ($tgtStorageData['TGT']) {
+            $this->tgt = $tgtStorageData['TGT'];
+            $this->tgtLocation = $this->casServer . $this->casRESTcontext . '/' . $this->tgt;
         } else {
-            throw new \Exception ('TGT storage missing "TGT" value!', 552);
+            throw new \Exception('TGT storage missing "TGT" value!', 552);
         }
     }
 
     /**
      * Save the TGT data to a local file
      *
-     * @param string $tgt_storage_location
+     * @param string $tgtStorageLocation
      * @param string $tgt
      */
-    private function writeTGTtoFile($tgt_storage_location, $tgt)
+    private function writeTGTtoFile($tgtStorageLocation, $tgt)
     {
-        $tgt_storage_data = [
+        $tgtStorageData = [
             'TGT' => $tgt,
-            'username' => $this->cas_username,
-            'server' => $this->cas_server,
-            'context' => $this->cas_rest_context,
+            'username' => $this->casUsername,
+            'server' => $this->casServer,
+            'context' => $this->casRESTcontext,
             'saved' => time()
         ];
 
-        file_put_contents($tgt_storage_location, json_encode($tgt_storage_data));
+        file_put_contents($tgtStorageLocation, json_encode($tgtStorageData));
     }
 
     /**
      * Combine the custom headers with class defaults
      *
-     * @param array $custom_headers
+     * @param array $customHeaders
      * @return array
      */
-    private function setGuzzleHeaders(array $custom_headers)
+    private function setGuzzleHeaders(array $customHeaders)
     {
 
-        $default_headers = [
-            'User-Agent' => 'PHP/CasRestClient/' . $this->version.'/'.$this->guzzle_client->getDefaultUserAgent(),
+        $defaultHeaders = [
+            'User-Agent' => 'PHP/CasRestClient/' . $this->version.'/'.$this->gozzleClient->getDefaultUserAgent(),
             'Accept' => '*/*',
             'Accept-Encoding' => 'gzip, deflate'
         ];
 
-        return array_merge($default_headers, $custom_headers);
+        return array_merge($defaultHeaders, $customHeaders);
     }
 }
