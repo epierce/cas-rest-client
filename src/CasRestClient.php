@@ -2,6 +2,7 @@
 namespace epierce;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\ClientException;
 
 /**
@@ -12,13 +13,9 @@ class CasRestClient
 {
 
     /**
-     * @var string version
-     */
-    private $version = '0.2.1';
-    /**
      * @var Client Guzzle REST client
      */
-    private $gozzleClient;
+    private $guzzleClient;
     /**
      * @var bool Verify SSL certificate or not
      */
@@ -52,15 +49,6 @@ class CasRestClient
      */
     private $tgtStorageLocation;
 
-
-    /**
-     *  Class constructor.
-     */
-    public function __construct()
-    {
-        $this->gozzleClient = new Client();
-    }
-
     /**
      *  Set the CAS server URL
      *
@@ -69,6 +57,7 @@ class CasRestClient
     public function setCasServer($server)
     {
         $this->casServer = $server;
+        $this->guzzleClient = new Client(['base_uri' => $server, 'cookies' => true]);
     }
 
     /**
@@ -98,7 +87,7 @@ class CasRestClient
      *
      * @param bool $value
      */
-    public function verifySSL($value = true)
+    public function verifySSL(Boolean $value)
     {
         $this->verifySSL = $value;
     }
@@ -110,7 +99,7 @@ class CasRestClient
      */
     public function getGuzzleClient()
     {
-        return $this->gozzleClient;
+        return $this->guzzleClient;
     }
 
     /**
@@ -120,7 +109,7 @@ class CasRestClient
      */
     public function setGuzzleClient(Client $client)
     {
-        $this->gozzleClient = $client;
+        $this->guzzleClient = $client;
     }
 
     /**
@@ -155,7 +144,7 @@ class CasRestClient
         // Make sure a TGT exists
         $this->checkTgtExists();
 
-        $this->gozzleClient->delete($this->tgtLocation);
+        $this->guzzleClient->delete($this->tgtLocation);
         $this->tgtLocation = null;
         $this->tgt = null;
 
@@ -176,7 +165,7 @@ class CasRestClient
      * @return mixed
      * @throws \Exception
      */
-    public function get($service, $headers = [], $body = [])
+    public function get($service, $headers = [], $body = '')
     {
         return $this->callRestService('GET', $service, $headers, $body);
     }
@@ -190,9 +179,9 @@ class CasRestClient
      * @return mixed
      * @throws \Exception
      */
-    public function post($service, $headers = [], $body = [])
+    public function post($service, $headers = [], $body = '', $form_params = [])
     {
-        return $this->callRestService('POST', $service, $headers, $body);
+        return $this->callRestService('POST', $service, $headers, $body, $form_params);
     }
 
     /**
@@ -204,9 +193,9 @@ class CasRestClient
      * @return mixed
      * @throws \Exception
      */
-    public function patch($service, $headers = [], $body = [])
+    public function patch($service, $headers = [], $body = '', $form_params = [])
     {
-        return $this->callRestService('PATCH', $service, $headers, $body);
+        return $this->callRestService('PATCH', $service, $headers, $body, $form_params);
     }
 
     /**
@@ -218,9 +207,9 @@ class CasRestClient
      * @return mixed
      * @throws \Exception
      */
-    public function head($service, $headers = [], $body = [])
+    public function head($service, $headers = [], $body = '', $form_params = [])
     {
-        return $this->callRestService('HEAD', $service, $headers, $body);
+        return $this->callRestService('HEAD', $service, $headers, $body, $form_params);
     }
 
     /**
@@ -232,9 +221,9 @@ class CasRestClient
      * @return mixed
      * @throws \Exception
      */
-    public function put($service, $headers = [], $body = [])
+    public function put($service, $headers = [], $body = '', $form_params = [])
     {
-        return $this->callRestService('PUT', $service, $headers, $body);
+        return $this->callRestService('PUT', $service, $headers, $body, $form_params);
     }
 
     /**
@@ -246,9 +235,9 @@ class CasRestClient
      * @return mixed
      * @throws \Exception
      */
-    public function options($service, $headers = [], $body = [])
+    public function options($service, $headers = [], $body = '', $form_params = [])
     {
-        return $this->callRestService('OPTIONS', $service, $headers, $body);
+        return $this->callRestService('OPTIONS', $service, $headers, $body, $form_params);
     }
 
     /**
@@ -260,9 +249,9 @@ class CasRestClient
      * @return mixed
      * @throws \Exception
      */
-    public function delete($service, $headers = [], $body = [])
+    public function delete($service, $headers = [], $body = '', $form_params = [])
     {
-        return $this->callRestService('DELETE', $service, $headers, $body);
+        return $this->callRestService('DELETE', $service, $headers, $body, $form_params);
     }
 
     /**
@@ -287,7 +276,7 @@ class CasRestClient
      * @return mixed|null
      * @throws \Exception
      */
-    private function callRestService($method, $service, $headers = [], $body = [])
+    private function callRestService($method, $service, $headers = [], $body = '', $form_params = [])
     {
         // Make sure a TGT exists
         $this->checkTgtExists();
@@ -301,35 +290,38 @@ class CasRestClient
             $finalService = $service . '&ticket=' . $serviceTicket;
         }
 
+        $jar = new \GuzzleHttp\Cookie\CookieJar;
+
         $options = [
-            'cookies' => true,
+            'cookies' => $jar,
             'body' => $body,
+            'form_params' => $form_params,
             'headers' => $this->setGuzzleHeaders($headers)
         ];
 
         switch ($method) {
             case 'GET':
-                $result = $this->gozzleClient->get($finalService, $options);
+                $result = $this->guzzleClient->get($finalService, $options);
                 break;
 
             case 'HEAD':
-                $result = $this->gozzleClient->head($finalService, $options);
+                $result = $this->guzzleClient->head($finalService, $options);
                 break;
 
             case 'POST':
-                $result = $this->gozzleClient->post($finalService, $options);
+                $result = $this->guzzleClient->post($finalService, $options);
                 break;
 
             case 'PUT':
-                $result = $this->gozzleClient->put($finalService, $options);
+                $result = $this->guzzleClient->put($finalService, $options);
                 break;
 
             case 'PATCH':
-                $result = $this->gozzleClient->patch($finalService, $options);
+                $result = $this->guzzleClient->patch($finalService, $options);
                 break;
 
             case 'DELETE':
-                $result = $this->gozzleClient->delete($finalService, $options);
+                $result = $this->guzzleClient->delete($finalService, $options);
                 break;
 
             default:
@@ -348,21 +340,20 @@ class CasRestClient
      */
     private function getServiceTicket($service)
     {
-        $request = $this->gozzleClient->createRequest(
-            'POST',
-            $this->tgtLocation,
-            [
-                'verify' => $this->verifySSL,
-                'body' => [
-                    'service' => $service
-                ],
-                'headers' => $this->setGuzzleHeaders([])
-            ]
-        );
+
 
         try {
-            $response = $this->gozzleClient->send($request);
-            return $response->getBody();
+            $response = $this->guzzleClient->request(
+                'POST',
+                $this->tgtLocation,
+                [
+                    'verify' => $this->verifySSL,
+                    'form_params' => [
+                        'service' => $service
+                    ]
+                ]
+            );
+            return (string) $response->getBody();
         } catch (ClientException $e) {
             // Bad TGT - login again
             if ($e->getCode() == 404) {
@@ -402,31 +393,29 @@ class CasRestClient
         // Try to load the TGT from the storage file
         if (!$forceAuth && $tgtStorageLocation) {
             if (file_exists($tgtStorageLocation)) {
-                if (is_readable($tgtStorageLocation)) {
-                    $this->loadTGTfromFile($tgtStorageLocation);
-                    return true;
-                } else {
+                if (! is_readable($tgtStorageLocation)) {
                     throw new \Exception('TGT storage file [' . $tgtStorageLocation . '] is not readable!', 500);
                 }
+                $this->loadTGTfromFile($tgtStorageLocation);
+                return true;
             }
         }
 
-        $request = $this->gozzleClient->createRequest(
-            'POST',
-            $this->casServer . $this->casRESTcontext,
-            [
-                'verify' => $this->verifySSL,
-                'body' => [
-                    'username' => $this->casUsername,
-                    'password' => $this->casPassword
-                ],
-                'headers' => $this->setGuzzleHeaders([])
-            ]
-        );
-
         try {
-            $response = $this->gozzleClient->send($request);
+            $response = $this->guzzleClient->request(
+                'POST',
+                $this->casRESTcontext,
+                [
+                    'verify' => $this->verifySSL,
+                    'form_params' => [
+                        'username' => $this->casUsername,
+                        'password' => $this->casPassword
+                    ]
+                ]
+            );
+
             $responseHeaders = $response->getHeaders();
+
         } catch (ClientException $e) {
             // Bad username or password.
             if ($e->getCode() == 400) {
@@ -516,7 +505,6 @@ class CasRestClient
     {
 
         $defaultHeaders = [
-            'User-Agent' => 'PHP/CasRestClient/' . $this->version.'/'.$this->gozzleClient->getDefaultUserAgent(),
             'Accept' => '*/*',
             'Accept-Encoding' => 'gzip, deflate'
         ];
