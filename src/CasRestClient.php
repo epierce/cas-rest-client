@@ -87,7 +87,7 @@ class CasRestClient
      *
      * @param bool $value
      */
-    public function verifySSL(Boolean $value)
+    public function verifySSL($value)
     {
         $this->verifySSL = $value;
     }
