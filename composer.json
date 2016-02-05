@@ -2,17 +2,17 @@
     "name": "epierce/cas-rest-client",
     "description": "PHP client for the CAS REST protocol.",
     "type": "library",
-    "license": "Apache-2.0",
+    "license": "MIT",
     "authors": [
         {
             "name": "Eric Pierce",
-            "email": "epierce@usf.edu",
+            "email": "epierce@mail.usf.edu",
             "role": "Developer"
         }
     ],
     "require": {
-        "guzzlehttp/guzzle": "~5.0",
-        "php": ">=5.4"
+        "guzzlehttp/guzzle": "~6.0",
+        "php": ">=5.5.0"
     },
     "require-dev": {
         "phpunit/phpunit": "4.3.*"
