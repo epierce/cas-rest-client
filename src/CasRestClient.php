@@ -296,7 +296,8 @@ class CasRestClient
             'cookies' => $jar,
             'body' => $body,
             'form_params' => $form_params,
-            'headers' => $this->setGuzzleHeaders($headers)
+            'headers' => $this->setGuzzleHeaders($headers),
+            'verify' => $this->verifySSL
         ];
 
         switch ($method) {
